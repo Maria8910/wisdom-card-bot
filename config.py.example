@@ -1,0 +1,14 @@
+# Пример файла конфигурации
+# Скопируйте этот файл в config.py и заполните своими токенами
+# НЕ ПУБЛИКУЙТЕ config.py в Git!
+
+# Токен Telegram бота
+TELEGRAM_BOT_TOKEN = "your_telegram_bot_token_here"
+
+# OAuth токен Яндекс Диска
+YANDEX_DISK_TOKEN = "your_yandex_disk_token_here"
+
+# Путь к папке с картинками на Яндекс Диске
+YANDEX_DISK_FOLDER = "/wisdom_card"
+
+
