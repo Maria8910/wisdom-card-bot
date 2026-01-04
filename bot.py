@@ -5,10 +5,17 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from dotenv import load_dotenv
 from yandex_disk import YandexDiskClient
-import config
 
 # Загружаем переменные окружения (если есть .env файл)
 load_dotenv()
+
+# Пытаемся импортировать config (для локальной разработки, опционально)
+try:
+    import config
+    HAS_CONFIG = True
+except ImportError:
+    HAS_CONFIG = False
+    config = None
 
 # Настройка логирования
 logging.basicConfig(
@@ -18,9 +25,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Инициализация клиента Яндекс Диска
+yandex_disk_token = os.getenv('YANDEX_DISK_TOKEN')
+yandex_disk_folder = os.getenv('YANDEX_DISK_FOLDER', '/wisdom_card')
+
+# Fallback на config только для локальной разработки
+if not yandex_disk_token and HAS_CONFIG:
+    yandex_disk_token = getattr(config, 'YANDEX_DISK_TOKEN', None)
+if yandex_disk_folder == '/wisdom_card' and HAS_CONFIG:
+    yandex_disk_folder = getattr(config, 'YANDEX_DISK_FOLDER', '/wisdom_card')
+
 yandex_disk = YandexDiskClient(
-    token=os.getenv('YANDEX_DISK_TOKEN') or config.YANDEX_DISK_TOKEN,
-    folder_path=os.getenv('YANDEX_DISK_FOLDER') or config.YANDEX_DISK_FOLDER
+    token=yandex_disk_token,
+    folder_path=yandex_disk_folder
 )
 
 
@@ -148,11 +164,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Основная функция запуска бота"""
-    # Получаем токен бота из переменных окружения или config.py
-    bot_token = os.getenv('TELEGRAM_BOT_TOKEN') or config.TELEGRAM_BOT_TOKEN
+    # Получаем токен бота из переменных окружения
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+    
+    # Fallback на config только для локальной разработки
+    if not bot_token and HAS_CONFIG:
+        bot_token = getattr(config, 'TELEGRAM_BOT_TOKEN', None)
     
     if not bot_token:
-        raise ValueError("TELEGRAM_BOT_TOKEN не установлен! Проверьте config.py или .env файл")
+        raise ValueError("TELEGRAM_BOT_TOKEN не установлен! Проверьте переменные окружения на Bothost или config.py для локальной разработки")
     
     # Создаем приложение
     application = Application.builder().token(bot_token).build()

@@ -5,15 +5,28 @@ import os
 import sys
 from dotenv import load_dotenv
 import requests
-import config
 
 # Загружаем переменные окружения (если есть .env файл)
 load_dotenv()
 
+# Пытаемся импортировать config (для локальной разработки, опционально)
+try:
+    import config
+    HAS_CONFIG = True
+except ImportError:
+    HAS_CONFIG = False
+    config = None
+
 def test_yandex_disk():
     """Проверка подключения к Яндекс Диску"""
-    token = os.getenv('YANDEX_DISK_TOKEN') or config.YANDEX_DISK_TOKEN
-    folder_path = os.getenv('YANDEX_DISK_FOLDER') or config.YANDEX_DISK_FOLDER
+    token = os.getenv('YANDEX_DISK_TOKEN')
+    folder_path = os.getenv('YANDEX_DISK_FOLDER', '/wisdom_card')
+    
+    # Fallback на config только для локальной разработки
+    if not token and HAS_CONFIG:
+        token = getattr(config, 'YANDEX_DISK_TOKEN', None)
+    if folder_path == '/wisdom_card' and HAS_CONFIG:
+        folder_path = getattr(config, 'YANDEX_DISK_FOLDER', '/wisdom_card')
     
     if not token:
         print("❌ YANDEX_DISK_TOKEN не найден в .env файле")
@@ -61,7 +74,11 @@ def test_yandex_disk():
 
 def test_telegram_bot():
     """Проверка токена Telegram бота"""
-    token = os.getenv('TELEGRAM_BOT_TOKEN') or config.TELEGRAM_BOT_TOKEN
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    
+    # Fallback на config только для локальной разработки
+    if not token and HAS_CONFIG:
+        token = getattr(config, 'TELEGRAM_BOT_TOKEN', None)
     
     if not token:
         print("❌ TELEGRAM_BOT_TOKEN не найден в config.py или .env файле")
